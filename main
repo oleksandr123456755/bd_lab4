@@ -1,0 +1,343 @@
+use online_store
+
+//-----------------------------------------------------------
+//// 1) Створіть декілька товарів з різним набором властивостей
+
+db.items.insertMany([
+   {"id": 1, "category": "Tablet", "model": "iPad Air", "producer": "Apple", "price": 600},
+   {"id": 2, "category": "Phone", "model": "iPhone 13", "producer": "Apple", "price": 800},
+   {"id": 3, "category": "Smart Speaker", "model": "Amazon Echo", "producer": "Amazon", "price": 100},
+   {"id": 4, "category": "Gaming Console", "model": "PlayStation 5", "producer": "Sony", "price": 500},
+   {"id": 5, "category": "Router", "model": "Google Nest Wifi", "producer": "Google", "price": 300},
+   {"id": 6, "category": "Fitness Tracker", "model": "Fitbit Charge 4", "producer": "Fitbit", "price": 150},
+   {"id": 7, "category": "Phone", "model": "Samsung Galaxy S21 Ultra", "producer": "Samsung", "price": 1200},
+   {"id": 8, "category": "Phone", "model": "Google Pixel 5", "producer": "Google", "price": 700},
+   {"id": 9, "category": "Phone", "model": "OnePlus 9 Pro", "producer": "OnePlus", "price": 900},
+   {"id": 10, "category": "Phone", "model": "Xiaomi Mi 11", "producer": "Xiaomi", "price": 800},
+]);
+////-----------------------------------------------------------
+// 2) Напишіть запит, який виводить усі товари (відображення у JSON)
+
+db.items.find().pretty();
+//-----------------------------------------------------------
+// 3)Підрахуйте скільки товарів у певної категорії
+
+db.items.countDocuments({"category": "Phone"});
+//-----------------------------------------------------------
+// 4) Підрахуйте скільки є різних категорій товарів
+
+db.items.distinct("category").length;
+//-----------------------------------------------------------
+// 5)Виведіть список всіх виробників товарів без повторів
+
+db.items.distinct("producer");
+//-----------------------------------------------------------
+// 6)Напишіть запити, які вибирають товари за різними критеріям і їх сукупності: 
+        //a) категорія та ціна (в проміжку) - конструкція $and, 
+        
+        db.items.find({
+            $and: 
+            [
+                { "category": "Phone" },
+                { "price": { $gte: 500, $lte: 1000 } }
+            ]
+        });
+        //b) модель чи одна чи інша - конструкція $or,
+        
+        db.items.find({
+            $or: 
+            [
+                { "model": "iPad Air" },
+                { "model": "Samsung Galaxy S21 Ultra" }
+            ]
+        });
+      //c) виробники з переліку - конструкція $in
+      
+        var producers = ["Apple", "Samsung", "Google"];
+        db.items.find({ "producer": { $in: producers } });
+//-----------------------------------------------------------
+//// 7) Оновіть певні товари, змінивши існуючі значення і додайте нові властивості (характеристики) усім товарам за певним критерієм
+//
+db.items.updateMany(
+    { "producer": "Apple" }, 
+    { 
+        $set: { "price": 700, "features": "Face ID" } 
+    }
+);
+db.items.find().pretty();
+//-----------------------------------------------------------
+// 8) Знайдіть товари у яких є (присутнє поле) певні властивості
+
+db.items.find({ "features": { $exists: true } });
+//-----------------------------------------------------------
+// 9) Для знайдених товарів збільшіть їх вартість на певну суму 
+
+db.items.updateMany(
+    { "features": { $exists: true } }, // Criteria to select items with the "features" field
+    { 
+        $inc: { "price": 200 }
+    });
+db.items.find().pretty();
+//-----------------------------------------------------------
+
+
+////// 1) Створіть кілька замовлень з різними наборами товарів, але так щоб один з товарів був у декількох замовленнях
+//
+db.orders.insertMany([
+    {
+        "order_number": 1,
+        "date": ISODate("2024-05-06"),
+        "total_sum": 600,
+        "customer": {
+            "name": "John",
+            "surname": "Doe",
+            "phones": [9876543, 1234567],
+            "address": "123 Main St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            1, 
+            3
+        ]
+    },
+    {
+        "order_number": 2,
+        "date": ISODate("2024-05-05"),
+        "total_sum": 1500,
+        "customer": {
+            "name": "Alice",
+            "surname": "Smith",
+            "phones": [9876543, 1234567],
+            "address": "456 Elm St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            4,
+            6
+        ]
+    },
+    {
+        "order_number": 3,
+        "date": ISODate("2024-05-07"),
+        "total_sum": 300,
+        "customer": {
+            "name": "Emily",
+            "surname": "Johnson",
+            "phones": [9876543, 1234567],
+            "address": "789 Oak St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            10
+        ]
+    },
+    {
+        "order_number": 4,
+        "date": ISODate("2024-05-08"),
+        "total_sum": 2600,
+        "customer": {
+            "name": "Emma",
+            "surname": "Brown",
+            "phones": [9876543, 1234567],
+            "address": "321 Maple St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            1,
+            7,
+            9
+        ]
+    },
+    {
+        "order_number": 5,
+        "date": ISODate("2024-05-09"),
+        "total_sum": 1450,
+        "customer": {
+            "name": "Emma",
+            "surname": "Brown",
+            "phones": [9876543, 1234567],
+            "address": "321 Maple St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            7,
+            3
+        ]
+    },
+    {
+        "order_number": 6,
+        "date": ISODate("2024-05-10"),
+        "total_sum": 1000,
+        "customer": {
+            "name": "Daniel",
+            "surname": "Jones",
+            "phones": [9876543, 1234567],
+            "address": "123 Cedar St, Anytown, USA"
+        },
+        "payment": {
+            "card_owner": "Andrii Rodionov",
+            "cardId": 12345678
+        },
+        "items": [
+            1,
+            1
+        ]
+    }
+]);
+
+
+
+//-----------------------------------------------------------
+// 2) Виведіть всі замовлення
+db.orders.find();
+
+//-----------------------------------------------------------
+// 3) Виведіть замовлення з вартістю більше певного значення
+db.orders.find({ "total_sum": { $gt: 1000 } });
+
+
+//-----------------------------------------------------------
+// 4) Знайдіть замовлення зроблені одним замовником
+
+db.orders.find({ "customer.name": "Emma", "customer.surname": "Brown" });
+//-----------------------------------------------------------
+// 5) Знайдіть всі замовлення з певним товаром (товарами) (шукати можна по ObjectId)
+
+
+db.orders.find({ "items": 1 });
+
+//-----------------------------------------------------------
+// 6) Додайте в усі замовлення з певним товаром ще один товар і збільште існуючу вартість замовлення на деяке значення Х
+//
+db.orders.updateMany(
+    { "items": 1 },
+    {
+        $push: { "items": 2 },
+        $inc: { "total_sum": 200 }
+    }
+);
+
+
+db.orders.find({ "items": 1 });
+//-----------------------------------------------------------
+// 7) Виведіть кількість товарів в певному замовленні
+//
+
+
+db.orders.findOne({ "order_number": 1 }).items.length;
+
+
+//-----------------------------------------------------------
+// 8) Виведіть тільки інформацію про кастомера і номери кредитної карт, для замовлень вартість яких перевищує певну суму
+
+db.orders.find(
+    { "total_sum": { $gt: 2000 } },
+    { "_id": 0, "customer.name": 1, "customer.surname": 1, "customer.phones": 1, "payment.card_owner": 1 }
+);
+//-----------------------------------------------------------
+// 9) Видаліть товар з замовлень, зроблених за певний період дат
+
+db.orders.updateMany(
+    { "date": { $gte: ISODate("2024-05-05T00:00:00Z"), $lte: ISODate("2024-07-10T23:59:59Z") } },
+    { $pull: {items: 1} }
+);
+
+db.orders.find()
+////-----------------------------------------------------------
+// 10) Перейменуйте у всіх замовлення ім'я (прізвище) замовника
+
+db.orders.updateMany(
+    {},
+    { $set: { "customer.surname": "Ivanenko" } }
+);
+
+db.orders.find()
+//-----------------------------------------------------------
+//// 11) Знайдіть замовлення зроблені одним замовником, і виведіть тільки інформацію про кастомера та товари у замовлені підставивши заміст ObjectId("***") назви товарів та їх вартість (аналог join-а між таблицями orders та items).
+//
+db.orders.aggregate([
+  { $match: { "customer.name": "Emma", "customer.surname": "Ivanenko" } },
+  { $unwind: "$items" },
+  {
+    $lookup: {
+      from: "items",
+      localField: "items",
+      foreignField: "id",
+      as: "itemDetails"
+    }
+  },
+  {
+    $group: {
+      _id: "$_id",
+      customer: { $first: "$customer" },
+      items: { $push: "$itemDetails" },
+      total_sum: { $first: "$total_sum" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      customer: 1,
+      items: { $arrayElemAt: ["$items", 0] },
+      total_sum: 1
+    }
+  }
+]);
+//-----------------------------------------------------------
+// 12) Створіть Сapped collection яка б містила 5 останніх відгуків на наш інтернет-магазин. Структуру запису визначити самостійно.
+db.createCollection("reviews", { capped: true, size: 100000, max: 4 });
+db.reviews.insertMany([
+  { 
+    "customer_name": "John Doe",
+    "rating": 4,
+    "comment": "Great products and fast shipping!",
+    "date": ISODate("2024-05-06")
+  },
+  { 
+    "customer_name": "Alice Smith",
+    "rating": 5,
+    "comment": "Excellent service. Highly recommended!",
+    "date": ISODate("2024-05-05")
+  },
+  { 
+    "customer_name": "Emily Johnson",
+    "rating": 3,
+    "comment": "Good selection, but delivery was slow.",
+    "date": ISODate("2024-05-04")
+  },
+  { 
+    "customer_name": "Michael Williams",
+    "rating": 4,
+    "comment": "Quality products. Will buy again.",
+    "date": ISODate("2024-05-03")
+  },
+  { 
+    "customer_name": "Emma Brown",
+    "rating": 5,
+    "comment": "Amazing customer service! Thank you!",
+    "date": ISODate("2024-05-02")
+  },
+  { 
+    "customer_name": "Emma Brown(2)",
+    "rating": 5,
+    "comment": "Amazing customer service! Thank you!",
+    "date": ISODate("2024-05-02")
+  }
+]);
+////
+db.reviews.find();
